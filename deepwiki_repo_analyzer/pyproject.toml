@@ -1,0 +1,13 @@
+[project]
+name = "deepwiki-repo-analyzer"
+version = "0.1.0"
+description = "A small OpenAI Agents SDK + DeepWiki MCP repository analyzer demo."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "openai-agents>=0.2.0",
+    "mcp>=1.9.0",
+]
+
+[tool.ruff]
+line-length = 100
