@@ -1,0 +1,7 @@
+streamlit
+pydantic
+requests
+ddgs
+yfinance
+openpyxl
+openai-agents
