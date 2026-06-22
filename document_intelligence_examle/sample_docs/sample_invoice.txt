@@ -1,0 +1,24 @@
+FATURA
+
+Satıcı Firma: Atlas Yazılım ve Danışmanlık A.Ş.
+Vergi No: 1234567890
+Adres: Maslak Mah. Büyükdere Cad. No: 10 Sarıyer / İstanbul
+
+Alıcı Firma: Nova Telekomünikasyon Hizmetleri Ltd. Şti.
+Vergi No: 9876543210
+Adres: Esentepe Mah. Teknoloji Sok. No: 4 Şişli / İstanbul
+
+Fatura No: INV-2026-0042
+Fatura Tarihi: 15.06.2026
+Son Ödeme Tarihi: 30.06.2026
+
+Hizmetler:
+1. Yapay zeka doküman işleme danışmanlığı - 80.000 TL
+2. Dashboard kurulum ve eğitim hizmeti - 25.000 TL
+
+Ara Toplam: 105.000 TL
+KDV (%20): 21.000 TL
+Genel Toplam: 126.000 TL
+
+Ödeme Koşulu: Son ödeme tarihinden sonra yapılan ödemelerde aylık %3 gecikme faizi uygulanır.
+Not: Hizmetler teslim edilmiştir. İtirazlar fatura tarihinden itibaren 7 gün içinde yazılı olarak bildirilmelidir.

@@ -1,0 +1,19 @@
+[project]
+name = "document-intelligence-minimaxm3"
+version = "0.1.0"
+description = "Document Intelligence demo using Ollama Cloud MiniMax M3, without OpenAI API dependencies."
+requires-python = ">=3.10"
+dependencies = [
+  "requests>=2.32.0",
+  "python-dotenv>=1.0.1",
+  "pydantic>=2.7.0",
+  "pypdf>=4.2.0",
+  "pandas>=2.2.0",
+  "openpyxl>=3.1.2",
+  "streamlit>=1.36.0",
+  "pillow>=10.3.0",
+  "pytesseract>=0.3.10"
+]
+
+[tool.ruff]
+line-length = 100

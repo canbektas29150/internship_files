@@ -1,0 +1,29 @@
+HİZMET SÖZLEŞMESİ
+
+Taraflar:
+1. Hizmet Veren: Atlas Veri Teknolojileri A.Ş.
+2. Müşteri: Kuzey Finansal Çözümler Ltd. Şti.
+
+Sözleşme Tarihi: 01.06.2026
+Sözleşme Süresi: 12 ay
+
+Madde 1 - Konu
+Bu sözleşme, yapay zeka tabanlı doküman sınıflandırma ve bilgi çıkarımı hizmetlerinin sağlanmasına ilişkindir.
+
+Madde 2 - Hizmet Bedeli
+Müşteri, hizmetler için aylık 50.000 TL + KDV ödeme yapacaktır. Ödemeler her ayın ilk 10 günü içinde gerçekleştirilir.
+
+Madde 3 - Gizlilik
+Taraflar, sözleşme kapsamında öğrendikleri ticari sırları ve kişisel verileri üçüncü kişilerle paylaşamaz.
+
+Madde 4 - Fesih
+Müşteri, sözleşmeyi feshetmek isterse en az 30 gün önce yazılı bildirimde bulunmalıdır. Hizmet Veren, ödemelerin 20 günden fazla gecikmesi halinde hizmeti askıya alabilir.
+
+Madde 5 - Sorumluluğun Sınırlandırılması
+Hizmet Veren'in toplam sorumluluğu, son üç ayda ödenen toplam hizmet bedeli ile sınırlıdır.
+
+Madde 6 - Ceza Şartı
+Müşteri, gizlilik yükümlülüğünü ihlal ederse 250.000 TL cezai şart ödemeyi kabul eder.
+
+Madde 7 - Yetkili Mahkeme
+İstanbul Çağlayan Mahkemeleri ve İcra Daireleri yetkilidir.
