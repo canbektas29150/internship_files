@@ -1,0 +1,32 @@
+Madde 1 - Taraflar
+Bu sözleşme, ABC Teknoloji A.Ş. ile kullanıcı arasında yazılım abonelik hizmetinin şartlarını düzenler. Hizmet sağlayıcı ABC Teknoloji A.Ş.'dir.
+
+---
+
+Madde 2 - Hizmet Kapsamı
+Hizmet sağlayıcı, kullanıcıya bulut tabanlı belge yönetimi, arama ve raporlama özellikleri sunar. Hizmet kapsamına özel yazılım geliştirme dahil değildir.
+
+---
+
+Madde 3 - Ödeme Koşulları
+Kullanıcı, aylık abonelik ücretini her ayın ilk beş iş günü içinde ödemekle yükümlüdür. Geciken ödemelerde aylık yüzde iki gecikme bedeli uygulanır.
+
+---
+
+Madde 4 - Fesih Bildirimi
+Taraflardan herhangi biri, sözleşmeyi sona erdirmek isterse karşı tarafa en az otuz gün önce yazılı bildirim yapmak zorundadır. Yazılı bildirim e-posta veya noter kanalıyla yapılabilir.
+
+---
+
+Madde 5 - Gizlilik
+Taraflar, sözleşme süresince öğrendikleri ticari sırları ve kişisel verileri gizli tutmakla yükümlüdür. Gizlilik yükümlülüğü sözleşmenin sona ermesinden sonra üç yıl boyunca devam eder.
+
+---
+
+Madde 6 - Sorumluluk Sınırı
+Hizmet sağlayıcının toplam sorumluluğu, son üç ayda kullanıcı tarafından ödenen toplam abonelik ücreti ile sınırlıdır. Dolaylı zararlar ve kar kaybı bu sınıra dahil değildir.
+
+---
+
+Madde 7 - Mücbir Sebep
+Doğal afet, savaş, kamu otoritesi kararları, uzun süreli internet kesintileri ve benzeri tarafların kontrolü dışındaki olaylar mücbir sebep kabul edilir.

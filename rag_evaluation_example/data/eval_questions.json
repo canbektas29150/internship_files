@@ -1,0 +1,27 @@
+[
+  {
+    "question": "Sözleşmeyi feshetmek için kaç gün önce bildirim yapmak gerekir?",
+    "gold_answer": "En az otuz gün önce yazılı bildirim yapılmalıdır.",
+    "gold_chunk_ids": ["C4"]
+  },
+  {
+    "question": "Geciken ödemelerde ne kadar gecikme bedeli uygulanır?",
+    "gold_answer": "Geciken ödemelerde aylık yüzde iki gecikme bedeli uygulanır.",
+    "gold_chunk_ids": ["C3"]
+  },
+  {
+    "question": "Gizlilik yükümlülüğü sözleşme bittikten sonra ne kadar sürer?",
+    "gold_answer": "Gizlilik yükümlülüğü sözleşmenin sona ermesinden sonra üç yıl boyunca devam eder.",
+    "gold_chunk_ids": ["C5"]
+  },
+  {
+    "question": "Hizmet kapsamına özel yazılım geliştirme dahil mi?",
+    "gold_answer": "Hayır, hizmet kapsamına özel yazılım geliştirme dahil değildir.",
+    "gold_chunk_ids": ["C2"]
+  },
+  {
+    "question": "Hizmet sağlayıcının sorumluluğu neyle sınırlıdır?",
+    "gold_answer": "Son üç ayda kullanıcı tarafından ödenen toplam abonelik ücreti ile sınırlıdır.",
+    "gold_chunk_ids": ["C6"]
+  }
+]
