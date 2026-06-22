@@ -1,0 +1,7 @@
+MCP Notes
+
+MCP means Model Context Protocol.
+It connects agents to external tools and data sources.
+
+In this example, the external system is the local filesystem.
+The agent uses an MCP filesystem server to list and read files.

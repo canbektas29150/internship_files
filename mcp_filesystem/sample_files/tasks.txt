@@ -1,0 +1,7 @@
+Learning Tasks
+
+1. Understand what an MCP server is.
+2. Start a local MCP server with MCPServerStdio.
+3. Connect the MCP server to an agent.
+4. List available MCP tools.
+5. Read files through MCP tools.

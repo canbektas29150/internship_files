@@ -1,0 +1,7 @@
+Favorite Books
+
+1. Dune
+2. Foundation
+3. The Pragmatic Programmer
+4. Clean Code
+5. Deep Work
