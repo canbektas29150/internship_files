@@ -1,145 +1,97 @@
-# Financial Agent Clean V2
+# Financial Agent Real V4
 
-Bu sürüm daha düzenli dashboard ve daha temiz summary output için sadeleştirildi.
+Bu sürüm önceki hataları düzeltir ve artık sadece IBM için ezberlenmiş cevap vermez.
 
-## Yapı
+## Bu sürümdeki ana fark
 
-```text
-financial_agent_clean_v2/
-├── README.md
-├── requirements.txt
-├── schemas.py      # Pydantic output modelleri
-├── resolver.py     # Şirket adı -> ticker adayları
-├── tools.py        # yfinance, DDGS, FRED, World Bank, SEC, export
-├── agent_flow.py   # planner -> async research -> analyst tools -> writer -> verifier
-├── dashboard.py    # Düzenli Streamlit UI
-├── app.py          # CLI
-└── __init__.py
-```
-
-## Ana akış
+Kullanıcı promptu şu sırayla işlenir:
 
 ```text
-User Prompt
+Prompt
 ↓
-Ticker Resolver
+Company / ticker resolver
 ↓
-Confirmation if needed
+Intent parser
 ↓
-Planner
+Research planner
 ↓
-Async data + research collection
+Finance data tool
 ↓
-Specialist analyst summaries
+News / web search tool
 ↓
-Writer summary
+SEC / filings tool
+↓
+Score calculator
+↓
+Prompt-first answer writer
 ↓
 Verifier
 ↓
-Dashboard + JSON/Excel export
+Dashboard + trace timeline + local logs
 ```
 
-## Ne düzeltildi?
+Yani sistem artık promptu alıp:
+- hangi şirketten bahsedildiğini bulur,
+- kullanıcının ne sorduğunu sınıflandırır,
+- buna göre araştırma sorguları üretir,
+- yfinance / ddgs / SEC benzeri araçları çağırmaya çalışır,
+- gelen veriye göre kısa cevap ve detaylı rapor üretir,
+- her adımı `logs/trace_events.jsonl` içine yazar.
 
-- Output artık tek parça dağınık metin değil.
-- Ana ekranda kısa executive summary var.
-- Score kartları ayrı.
-- Key positives / key risks ayrı.
-- Araştırılan sorgular ve kaynaklar ayrı gösteriliyor.
-- SEC, macro, financials ve news verileri ayrı expander içinde.
-- Trace timeline daha okunabilir.
-- Dashboard hata ve confirmation akışı daha temiz.
-
-## Kurulum
+## Çalıştırma
 
 ```powershell
+cd financial_agent_real_v4
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-```
-
-PowerShell izin hatası olursa:
-
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-.\.venv\Scripts\Activate.ps1
-```
-
-## Dashboard
-
-```powershell
 python -m streamlit run dashboard.py
 ```
 
-## CLI
+CLI:
 
 ```powershell
-python app.py "apple"
-python app.py "ford"
-python app.py "AAPL risk analysis"
+python app.py "Apple 3. çeyrekte nasıl bir şey yapar"
+python app.py "IBM şirketinin yaptığı yatırımlar orta vadede nasıl etkiler?"
+python app.py "NVIDIA için riskler neler?"
 ```
 
-## Agents SDK
+## Ollama / Minimax M3 kullanımı
 
-OpenAI Agents SDK varsa ve `OPENAI_API_KEY` tanımlıysa writer kısmı Agent/Runner/tool mantığını kullanabilir.
-Yoksa aynı akış fallback modda deterministic olarak çalışır.
+OpenAI API kullanılmaz. LLM kullanmak istersen Ollama endpointi üzerinden çalışır:
 
 ```powershell
-$env:OPENAI_API_KEY="sk-..."
+$env:OLLAMA_BASE_URL="http://localhost:11434"
+$env:OLLAMA_MODEL="minimax-m3"
 ```
 
-Bu çıktı yatırım tavsiyesi değildir; due diligence ve araştırma desteği için tasarlanmıştır.
+Ollama yoksa sistem deterministic fallback writer ile yine çalışır.
 
-## V3 düzeltmeleri
+## Langfuse
 
-- `APPLE` yazınca artık raw ticker `APPLE` değil, `Apple Inc. / AAPL` adayı gelir.
-- Dashboard içinde `st.json(...)` ile görünen çirkin JSON blokları kaldırıldı.
-- Research Plan, Verifier, Trace ve Raw Data okunabilir metin/kart formatına çevrildi.
-- Raw Data bölümü `Data Snapshot` olarak sadeleştirildi.
-- Kaynaklar filtreleniyor; Outlook login, generic macro platform gibi alakasız sonuçlar ayıklanıyor.
-- Search query'leri artık `Ticker: APPLE` gibi saçma stringler değil, doğru şirket adı + ticker ile oluşturulur.
+Langfuse zorunlu değildir. Key yoksa sistem çökmez. Lokal log her zaman üretilir.
 
-## V4 dashboard düzenlemesi
+```powershell
+$env:LANGFUSE_PUBLIC_KEY="pk-lf-..."
+$env:LANGFUSE_SECRET_KEY="sk-lf-..."
+$env:LANGFUSE_HOST="https://cloud.langfuse.com"
+```
 
-- Üstteki teknik açıklama yazısı kaldırıldı.
-- Dashboard başlığı profesyonel hale getirildi.
-- JSON blokları ve raw teknik görüntü ana ekrandan kaldırıldı.
-- Sonuçlar artık şu sırayla gösterilir: Company overview, score cards, executive summary, key findings, tabs.
-- Research Plan, Sources, Verification, Data Snapshot ve Trace Timeline tab içinde temiz formatta gösterilir.
-- Confirmation ekranı daha düzenli kart formatına alındı.
+## Dosyalar
 
-## V5 dashboard düzenlemesi
+```text
+app.py                # CLI
+dashboard.py          # Streamlit dashboard
+agent_flow.py         # Ana agent akışı
+schemas.py            # dataclass modeller
+resolver.py           # Prompt -> company/ticker
+research_planner.py   # Prompt -> research plan
+tools.py              # yfinance, ddgs, SEC araçları
+scoring.py            # Investment/risk score hesapları
+writer.py             # Kısa cevap + rapor üretimi
+trace_logger.py       # Lokal trace + opsiyonel Langfuse
+llm_client.py         # Opsiyonel Ollama writer
+```
 
-- Analyst Findings artık Research Plan'den önce gösterilir.
-- Research Plan son taba taşındı; artık ana analizden önce teknik plan gösterilmiyor.
-- Her analyst için Role + Assessment + Positive Signals + Risk/Limitation Signals alanları eklendi.
-- Analyst açıklamaları daha anlaşılır hale getirildi: hangi veriye baktığı ve sonucu nasıl yorumladığı yazıyor.
-- Macro, SEC ve News analyst bölümlerindeki kısa ama bağlamsız cümleler daha açıklayıcı hale getirildi.
-
-## V6 dashboard düzenlemesi
-
-- Streamlit toolbar / Deploy / menu görünümü CSS ve `.streamlit/config.toml` ile gizlendi.
-- Uygulama varsayılan olarak koyu tema ve siyaha yakın arka planla açılır.
-- Füme arka plan yerine daha net siyah profesyonel tema kullanıldı.
-- Font ailesi Inter / Segoe UI / Roboto sırasıyla ayarlandı.
-- Header, score cards, tabs, buttons ve input alanları daha kurumsal görünüme çekildi.
-- Teknik ve gereksiz açıklama cümleleri arayüzden temizlendi.
-
-## V7 dashboard düzenlemesi
-
-- Arayüz tamamen siyah-beyaz yapıldı.
-- Kırmızı vurgu, gradient ve renkli status tonları kaldırıldı.
-- Sol bardaki örnek promptlar kaldırıldı.
-- Streamlit toolbar / menu görünümü gizlenmeye devam ediyor.
-- Varsayılan tema `.streamlit/config.toml` ile dark ve siyah arka plan olarak ayarlandı.
-- Tasarım ikonlara bağlı kalmayacak şekilde sade metin/kart yapısına çekildi.
-
-## V8 dashboard düzeltmesi
-
-- Streamlit chat_message kaldırıldı; renkli avatar/kaymış yazı problemi çözüldü.
-- Arayüz artık klasik chat balonları yerine tek sayfalık profesyonel araştırma paneli kullanır.
-- Sidebar başlangıçta kapalıdır ve örnek promptlar tamamen kaldırıldı.
-- Hata mesajları kırmızı/yellow Streamlit alert yerine siyah-beyaz özel panel olarak gösterilir.
-- Ethereum ve Bitcoin alias desteği eklendi: Ethereum -> ETH-USD, Bitcoin -> BTC-USD.
-- Layout kaymasını azaltmak için custom result card yapısı kullanıldı.
+Bu çıktı yatırım tavsiyesi değildir; araştırma ve due diligence desteği amaçlıdır.

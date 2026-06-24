@@ -1,203 +1,66 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any, Dict
+from dataclasses import asdict
+import json
 import streamlit as st
 
-from agent_flow import run_analysis
-from resolver import resolve_candidates
+from agent_flow import generate_report
 
 
-APP_TITLE = "Financial Research Agent"
-APP_SUBTITLE = "Structured company research, analyst review and verification"
-
-
-def init_state() -> None:
-    if "results" not in st.session_state:
-        st.session_state.results = []
-    if "pending_confirmation" not in st.session_state:
-        st.session_state.pending_confirmation = None
-    if "output_dir" not in st.session_state:
-        st.session_state.output_dir = "reports"
+st.set_page_config(page_title="Financial Agent", layout="wide", initial_sidebar_state="collapsed")
 
 
 def inject_css() -> None:
+    """
+    Inject a simple black–white theme for the dashboard.
+
+    The original version attempted to implement a dark theme and hacked into
+    Streamlit's header styles via CSS. Users found the grey header and
+    inconsistent colours distracting. This version applies a consistent
+    black background with light text across the entire app—including
+    buttons and input fields—while leaving the default Streamlit layout
+    otherwise untouched. Keeping the CSS simple makes it easier to tweak
+    later without breaking Streamlit updates.
+    """
     st.markdown(
         """
         <style>
-        :root {
-            --bg: #000000;
-            --panel: #070707;
-            --panel2: #0D0D0D;
-            --line: #2A2A2A;
-            --line2: #1A1A1A;
-            --text: #FFFFFF;
-            --muted: #BDBDBD;
-            --muted2: #808080;
+        /* Overall app background and text */
+        .stApp {
+            background-color: #000000;
+            color: #f5f5f5;
         }
 
-        html, body, .stApp, [data-testid="stAppViewContainer"] {
-            background: var(--bg) !important;
-            color: var(--text) !important;
-            font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        /* Header bar */
+        header[data-testid="stHeader"] {
+            background-color: #000000 !important;
+            color: #f5f5f5 !important;
+        }
+        header[data-testid="stHeader"] * {
+            color: #f5f5f5 !important;
         }
 
-        [data-testid="stHeader"],
-        [data-testid="stToolbar"],
-        [data-testid="stDecoration"],
-        [data-testid="stStatusWidget"],
-        #MainMenu,
-        footer,
-        header {
-            visibility: hidden !important;
-            display: none !important;
-            height: 0 !important;
+        /* Input boxes */
+        div[data-testid="stTextInput"] input {
+            background-color: #111111;
+            color: #ffffff;
+            border: 1px solid #444444;
         }
 
+        /* Buttons */
+        div[data-testid="stButton"] button {
+            background-color: #111111;
+            color: #ffffff;
+            border: 1px solid #444444;
+        }
+        div[data-testid="stButton"] button:hover {
+            background-color: #222222;
+        }
+
+        /* Constrain the main content width for readability */
         .block-container {
-            padding-top: 1.4rem !important;
-            max-width: 1180px !important;
-        }
-
-        .app-header {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            border-radius: 18px;
-            padding: 1.25rem 1.35rem;
-            margin-bottom: 1.1rem;
-        }
-
-        .app-title {
-            font-size: 2rem;
-            line-height: 1.15;
-            font-weight: 760;
-            letter-spacing: -0.035em;
-        }
-
-        .app-subtitle {
-            margin-top: 0.35rem;
-            color: var(--muted);
-            font-size: 0.96rem;
-        }
-
-        .panel {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            border-radius: 16px;
-            padding: 1rem 1.05rem;
-            margin: 0.75rem 0;
-        }
-
-        .thin-panel {
-            border: 1px solid var(--line2);
-            background: var(--panel2);
-            border-radius: 14px;
-            padding: 0.85rem 0.95rem;
-            margin: 0.55rem 0;
-        }
-
-        .label {
-            color: var(--muted2);
-            text-transform: uppercase;
-            letter-spacing: .07em;
-            font-size: .68rem;
-            font-weight: 700;
-            margin-bottom: .2rem;
-        }
-
-        .muted {
-            color: var(--muted);
-        }
-
-        .error-panel {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            border-radius: 14px;
-            padding: 1rem;
-            margin-top: .8rem;
-        }
-
-        .source-card {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            border-radius: 14px;
-            padding: .9rem 1rem;
-            margin-bottom: .75rem;
-        }
-
-        .stMetric {
-            background: var(--panel) !important;
-            border: 1px solid var(--line) !important;
-            border-radius: 16px !important;
-            padding: 1rem !important;
-        }
-
-        div[data-testid="stMetricValue"], div[data-testid="stMetricLabel"] {
-            color: var(--text) !important;
-        }
-
-        div[data-testid="stMetricLabel"] {
-            color: var(--muted) !important;
-        }
-
-        .stTabs [data-baseweb="tab-list"] {
-            border-bottom: 1px solid var(--line);
-            gap: .35rem;
-        }
-
-        .stTabs [data-baseweb="tab"] {
-            color: var(--muted);
-            background: transparent !important;
-            border-radius: 10px 10px 0 0;
-            font-weight: 650;
-        }
-
-        .stTabs [aria-selected="true"] {
-            color: var(--text) !important;
-            border-bottom: 2px solid var(--text) !important;
-            background: rgba(255,255,255,0.06) !important;
-        }
-
-        .stTextInput input, [data-testid="stChatInput"] textarea {
-            background: var(--panel) !important;
-            color: var(--text) !important;
-            border: 1px solid var(--line) !important;
-            border-radius: 12px !important;
-        }
-
-        .stButton > button, .stDownloadButton > button {
-            background: var(--panel2) !important;
-            color: var(--text) !important;
-            border: 1px solid var(--line) !important;
-            border-radius: 12px !important;
-            font-weight: 650 !important;
-        }
-
-        .stButton > button:hover, .stDownloadButton > button:hover {
-            background: #171717 !important;
-            border-color: #FFFFFF !important;
-            color: #FFFFFF !important;
-        }
-
-        h1, h2, h3, h4, p, li, span, div {
-            font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-        }
-
-        a {
-            color: #FFFFFF !important;
-            text-decoration: underline;
-        }
-
-        code {
-            background: #111111 !important;
-            color: #FFFFFF !important;
-            border: 1px solid var(--line);
-            border-radius: 6px;
-            padding: .1rem .3rem;
-        }
-
-        hr {
-            border-color: var(--line) !important;
+            max-width: 1400px;
+            padding-top: 2rem;
         }
         </style>
         """,
@@ -205,307 +68,144 @@ def inject_css() -> None:
     )
 
 
-def fmt(value: Any) -> str:
-    if value is None or value == "":
-        return "Not available"
-    if isinstance(value, float):
-        return f"{value:,.2f}"
-    if isinstance(value, int):
-        return f"{value:,}"
-    return str(value)
+def metric_table(scorecard):
+    rows = []
+    for m in scorecard.metrics:
+        rows.append({
+            "Metric": m.name,
+            "Value": m.value,
+            "Score": m.score,
+            "Weight": m.weight,
+            "Weighted": round(m.score * m.weight, 2),
+            "Source": m.source,
+            "Explanation": m.explanation,
+        })
+    st.dataframe(rows, use_container_width=True, hide_index=True)
 
 
-def header() -> None:
-    st.markdown(
-        f"""
-        <div class="app-header">
-            <div class="app-title">{APP_TITLE}</div>
-            <div class="app-subtitle">{APP_SUBTITLE}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+def sources_table(sources):
+    """
+    Render the list of collected sources as a set of clickable entries.
 
-
-def search_panel() -> None:
-    with st.form("research_form", clear_on_submit=False):
-        col1, col2 = st.columns([5, 1])
-        with col1:
-            query = st.text_input(
-                "Company or ticker",
-                placeholder="Apple, AAPL, Ford, ASELS.IS, Ethereum...",
-                label_visibility="collapsed",
-            )
-        with col2:
-            submitted = st.form_submit_button("Research", use_container_width=True)
-
-    c1, c2 = st.columns([1, 5])
-    with c1:
-        if st.button("Clear", use_container_width=True):
-            st.session_state.results = []
-            st.session_state.pending_confirmation = None
-            st.rerun()
-
-    if submitted and query.strip():
-        candidates = resolve_candidates(query.strip())
-
-        if not candidates:
-            st.session_state.pending_confirmation = None
-            st.session_state.results.insert(0, {
-                "error": "No match found. Try a clearer company name or ticker.",
-                "query": query.strip(),
-            })
-            st.rerun()
-
-        if len(candidates) == 1 and candidates[0].source in {"ticker_exact", "ticker_raw"}:
-            with st.spinner("Researching..."):
-                result = run_analysis(query.strip(), candidates[0].label, candidates[0].ticker, st.session_state.output_dir)
-            result["query"] = query.strip()
-            st.session_state.results.insert(0, result)
-            st.session_state.pending_confirmation = None
-            st.rerun()
-
-        st.session_state.pending_confirmation = {
-            "query": query.strip(),
-            "candidates": [c.model_dump() for c in candidates],
-        }
-        st.rerun()
-
-
-def show_confirmation() -> None:
-    pending = st.session_state.pending_confirmation
-    if not pending:
-        return
-
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.markdown("### Select the matching asset")
-    st.caption("The query matches one or more known assets. Choose one to continue.")
-
-    for i, c in enumerate(pending["candidates"]):
-        with st.container(border=True):
-            st.markdown(f"**{c['label']}**")
-            st.caption(f"Ticker: {c['ticker']} · Country/Type: {c.get('country') or 'N/A'} · Confidence: {c.get('confidence'):.2f}")
-            if st.button("Select", key=f"select_{i}", use_container_width=True):
-                with st.spinner("Researching..."):
-                    result = run_analysis(pending["query"], c["label"], c["ticker"], st.session_state.output_dir)
-                result["query"] = pending["query"]
-                st.session_state.results.insert(0, result)
-                st.session_state.pending_confirmation = None
-                st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-def show_error(result: dict) -> None:
-    st.markdown('<div class="error-panel">', unsafe_allow_html=True)
-    st.markdown("### No result")
-    st.write(result.get("error", "The request could not be processed."))
-    st.caption(f"Query: {result.get('query', '-')}")
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-def show_score_cards(score: Dict[str, Any]) -> None:
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Investment Score", f"{score.get('investment_score', 0)}/100")
-    c2.metric("Risk Score", f"{score.get('risk_score', 0)}/100")
-    c3.metric("Risk Level", score.get("risk_level", "N/A"))
-
-
-def show_overview(result: dict) -> None:
-    raw = result.get("raw_data", {})
-    profile = raw.get("profile") or {}
-
-    c1, c2, c3, c4 = st.columns(4)
-    for col, label, value in [
-        (c1, "Company", result.get("company")),
-        (c2, "Ticker", result.get("ticker")),
-        (c3, "Sector", profile.get("sector")),
-        (c4, "Country / Type", profile.get("country")),
-    ]:
-        col.markdown(f'<div class="label">{label}</div>', unsafe_allow_html=True)
-        col.markdown(f"**{fmt(value)}**")
-
-
-def show_bullets(title: str, items: list[str]) -> None:
-    st.markdown(f"#### {title}")
-    if not items:
-        st.caption("No clear signal was detected.")
-        return
-    for item in items:
-        st.markdown(f"- {item}")
-
-
-def analyst_role(name: str) -> str:
-    n = (name or "").lower()
-    if "fundamentals" in n:
-        return "Reviews growth, margin, cash flow and valuation metrics."
-    if "macro" in n:
-        return "Reviews interest rate, inflation and GDP growth context."
-    if "sec" in n:
-        return "Checks SEC EDGAR filing availability and risk factor text."
-    if "news" in n:
-        return "Reviews recent sources for positive signals and event risk."
-    return "Reviews one part of the research workflow."
-
-
-def show_analysts(findings: list[dict]) -> None:
-    if not findings:
-        st.caption("No analyst finding was generated.")
-        return
-
-    for f in findings:
-        st.markdown('<div class="thin-panel">', unsafe_allow_html=True)
-        name = f.get("name", "Analyst")
-        st.markdown(f"### {name}")
-        st.caption(analyst_role(name))
-        st.write(f.get("summary", ""))
-
-        left, right = st.columns(2)
-        with left:
-            show_bullets("Positive Signals", f.get("positives", []))
-        with right:
-            show_bullets("Risk / Limitation Signals", f.get("risks", []))
-        st.markdown("</div>", unsafe_allow_html=True)
-
-
-def show_sources(sources: list[dict]) -> None:
+    Rather than dumping a bare dataframe, this function prints each source
+    with a markdown link and its snippet. This makes it obvious what the
+    source is and allows users to open the link directly from the app.
+    If no sources are available (for example when the search tool is
+    unavailable), a friendly message is shown instead.
+    """
     if not sources:
-        st.caption("No relevant source was retrieved.")
+        st.info("Canlı kaynak bulunamadı veya arama aracı çalışmadı.")
         return
-
-    for i, s in enumerate(sources, 1):
-        st.markdown('<div class="source-card">', unsafe_allow_html=True)
-        st.markdown(f"**{i}. {s.get('title') or 'Untitled source'}**")
-        if s.get("summary"):
-            st.write(s["summary"])
-        if s.get("url"):
-            st.markdown(f"[Open source]({s['url']})")
-        st.caption(f"Query: {s.get('query', '-')}")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-
-def show_verification(v: Dict[str, Any]) -> None:
-    st.markdown(f"**Overall:** {v.get('overall', 'unknown')}")
-    warnings = v.get("warnings", [])
-    checks = v.get("checks", [])
-
-    if warnings:
-        st.markdown("#### Warnings")
-        for w in warnings:
-            st.markdown(f"- {w}")
-    else:
-        st.caption("No major warning was detected.")
-
-    if checks:
-        st.markdown("#### Checks")
-        for c in checks:
-            st.markdown(f"- {c}")
+    for idx, s in enumerate(sources, start=1):
+        # Only include a link if we have a URL; otherwise show the title
+        title = s.title or "Untitled Source"
+        link = f"[{title}]({s.url})" if s.url else title
+        st.markdown(f"**{idx}. {link}**", unsafe_allow_html=True)
+        if s.source_type:
+            st.caption(s.source_type)
+        if s.snippet:
+            st.write(s.snippet)
+        st.markdown("---")
 
 
-def show_data_trace(result: dict) -> None:
-    raw = result.get("raw_data", {})
-    profile = raw.get("profile") or {}
-    financials = raw.get("financials") or {}
-    macro = raw.get("macro") or {}
-    factors = macro.get("factors") or {}
-
-    st.markdown("### Data Snapshot")
-    c1, c2, c3 = st.columns(3)
-    c1.write(f"Market cap: **{fmt(profile.get('market_cap'))}**")
-    c2.write(f"Revenue growth: **{fmt(financials.get('revenue_growth'))}**")
-    c3.write(f"P/E ratio: **{fmt(financials.get('pe_ratio'))}**")
-
-    c4, c5, c6 = st.columns(3)
-    c4.write(f"Macro score: **{fmt(macro.get('score'))}/100**")
-    c5.write(f"Inflation: **{fmt(factors.get('inflation'))}**")
-    c6.write(f"GDP growth: **{fmt(factors.get('gdp_growth'))}**")
-
-    st.markdown("### Trace Timeline")
-    if result.get("trace_id"):
-        st.caption(f"Trace ID: {result['trace_id']}")
-    for step in result.get("trace_steps", []):
-        st.markdown(f"**{step.get('step')}. {step.get('name')}**")
-        st.caption(step.get("summary", ""))
-
-    st.markdown("### Previous Analysis")
-    memory = result.get("memory_comparison", {})
-    if not memory.get("has_previous"):
-        st.caption("No prior analysis is available for this ticker.")
-    else:
-        st.write(f"Investment score change: **{memory.get('investment_change')}**")
-        st.write(f"Risk score change: **{memory.get('risk_change')}**")
-
-
-def show_plan(plan: Dict[str, Any]) -> None:
-    st.write("The planner converts the request into a focused research workflow.")
-    st.markdown("#### Objective")
-    st.write(plan.get("objective", "Not available"))
-
-    st.markdown("#### Focus Areas")
-    st.write(", ".join(plan.get("focus_areas", [])) or "Not available")
-
-    st.markdown("#### Research Queries")
-    for q in plan.get("queries", []):
-        st.markdown(f"- `{q}`")
-
-    st.markdown("#### Tools")
-    st.write(", ".join(plan.get("tools", [])) or "Not available")
-
-
-def show_result(result: dict) -> None:
-    if result.get("error"):
-        show_error(result)
-        return
-
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-    show_overview(result)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    show_score_cards(result.get("score", {}))
-
-    st.markdown("## Executive Summary")
-    st.markdown(result.get("executive_summary", "No summary generated."))
-
-    left, right = st.columns(2)
-    with left:
-        show_bullets("Key Positives", result.get("score", {}).get("positives", []))
-    with right:
-        show_bullets("Key Risks", result.get("score", {}).get("risks", []))
-
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Analysts", "Sources", "Verification", "Data & Trace", "Research Plan"])
-
-    with tab1:
-        show_analysts(result.get("analyst_findings", []))
-    with tab2:
-        show_sources(result.get("sources", []))
-    with tab3:
-        show_verification(result.get("verification", {}))
-    with tab4:
-        show_data_trace(result)
-    with tab5:
-        show_plan(result.get("plan", {}))
-
-    d1, d2 = st.columns(2)
-    if result.get("json_path") and Path(result["json_path"]).exists():
-        d1.download_button("Download JSON", Path(result["json_path"]).read_bytes(), file_name=Path(result["json_path"]).name)
-    if result.get("excel_path") and Path(result["excel_path"]).exists():
-        d2.download_button("Download Excel", Path(result["excel_path"]).read_bytes(), file_name=Path(result["excel_path"]).name)
-
-
-def main() -> None:
-    st.set_page_config(
-        page_title=APP_TITLE,
-        layout="wide",
-        initial_sidebar_state="collapsed",
-        menu_items={"Get Help": None, "Report a bug": None, "About": None},
-    )
-    init_state()
+def main():
     inject_css()
-    header()
-    search_panel()
-    show_confirmation()
+    st.title("Financial Agent")
+    st.caption(
+        "Promptu okur, şirketi çözer, araştırma planı üretir, araçları çağırır, skorlar ve trace timeline gösterir."
+    )
 
-    for result in st.session_state.results:
-        show_result(result)
+    # Keep a minimal reference to data sources without cluttering the top of the page.
+    # Users found the previous “Step & Data Tracking” or similar sections distracting
+    # because they provided little value. A concise note is therefore displayed
+    # above the prompt field instead of in a separate expander.
+    st.caption(
+        "Veri kaynakları: yfinance finansal veriler, DuckDuckGo web araması, SEC CIK listesi ve Ollama modeli. "
+        "Analiz adımları ve kaynaklar `logs/trace_events.jsonl` dosyasına kaydedilir."
+    )
+
+    prompt = st.text_input("Analiz promptu", value="Apple 3. çeyrekte nasıl bir şey yapar")
+    run = st.button("Analiz Et")
+
+    if not run:
+        st.stop()
+
+    try:
+        with st.spinner("Agent araştırıyor..."):
+            report = generate_report(prompt)
+    except Exception as exc:
+        st.error(f"Hata: {exc}")
+        st.exception(exc)
+        st.stop()
+
+    st.subheader("Ön Cevap")
+    st.write(report.executive_answer)
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Company", f"{report.company.name}", report.company.ticker)
+    with col2:
+        st.metric("Investment Score", f"{report.investment_score.total_score}/100")
+    with col3:
+        # Risk score is now reported on a 1–10 scale
+        st.metric("Risk Score", f"{report.risk_score.total_score}/10")
+
+    tabs = st.tabs([
+        "Research Plan",
+        "Score Breakdown",
+        "Analyst Findings",
+        "Sources",
+        "Data Snapshot",
+        "Trace Timeline",
+        "Raw JSON",
+    ])
+
+    with tabs[0]:
+        st.markdown("### Planner Output")
+        st.write(f"**Intent:** {report.plan.intent}")
+        st.write(f"**Timeframe:** {report.plan.timeframe}")
+        st.write(f"**Resolver confidence:** {report.company.confidence} — {report.company.reason}")
+
+        st.markdown("### Questions to Answer")
+        for q in report.plan.questions_to_answer:
+            st.write(f"- {q}")
+
+        st.markdown("### Generated Research Queries")
+        st.dataframe([asdict(q) for q in report.plan.queries], use_container_width=True, hide_index=True)
+
+    with tabs[1]:
+        st.markdown("### Investment Score Breakdown")
+        metric_table(report.investment_score)
+        st.markdown("### Risk Score Breakdown (1–10 scale)")
+        metric_table(report.risk_score)
+
+    with tabs[2]:
+        for finding in report.analyst_findings:
+            with st.expander(finding.role, expanded=True):
+                st.write(finding.assessment)
+                st.markdown("**Positive / Useful signals**")
+                for x in finding.positives:
+                    st.write(f"- {x}")
+                st.markdown("**Risks / Limits**")
+                for x in finding.risks:
+                    st.write(f"- {x}")
+
+        st.markdown("### Verifier Notes")
+        for note in report.verifier_notes:
+            st.write(f"- {note}")
+
+    with tabs[3]:
+        sources_table(report.sources)
+
+    with tabs[4]:
+        st.json(report.data_snapshot)
+
+    with tabs[5]:
+        st.dataframe([asdict(e) for e in report.trace_events], use_container_width=True, hide_index=True)
+        st.caption("Aynı kayıtlar logs/trace_events.jsonl içine de yazılır.")
+
+    with tabs[6]:
+        st.json(report.to_dict())
 
 
 if __name__ == "__main__":

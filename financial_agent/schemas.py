@@ -1,73 +1,89 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
 
 
-class CompanyCandidate(BaseModel):
-    label: str
+@dataclass
+class CompanyCandidate:
+    name: str
     ticker: str
-    country: str = ""
-    confidence: float = 0.0
-    source: str = "unknown"
+    confidence: float
+    reason: str
 
 
-class ResearchPlan(BaseModel):
-    company: str
-    ticker: str
-    objective: str
-    focus_areas: List[str] = Field(default_factory=list)
-    queries: List[str] = Field(default_factory=list)
-    tools: List[str] = Field(default_factory=list)
-
-
-class ResearchSource(BaseModel):
+@dataclass
+class ResearchQuery:
+    topic: str
     query: str
+    source_type: str
+
+
+@dataclass
+class ResearchPlan:
+    original_prompt: str
+    intent: str
+    timeframe: str
+    company: CompanyCandidate
+    questions_to_answer: List[str]
+    queries: List[ResearchQuery]
+
+
+@dataclass
+class SourceItem:
     title: str
-    summary: str = ""
-    url: str = ""
+    url: str
+    snippet: str
+    source_type: str
 
 
-class AnalystFinding(BaseModel):
+@dataclass
+class MetricScore:
     name: str
-    status: str = "completed"
-    summary: str
-    positives: List[str] = Field(default_factory=list)
-    risks: List[str] = Field(default_factory=list)
-    data: Dict[str, Any] = Field(default_factory=dict)
+    value: str
+    score: float
+    weight: float
+    source: str
+    explanation: str
 
 
-class ScoreSummary(BaseModel):
-    investment_score: float
-    risk_score: float
-    risk_level: str
-    positives: List[str] = Field(default_factory=list)
-    risks: List[str] = Field(default_factory=list)
+@dataclass
+class ScoreCard:
+    label: str
+    total_score: float
+    metrics: List[MetricScore]
 
 
-class VerificationResult(BaseModel):
-    overall: str = "pass"
-    warnings: List[str] = Field(default_factory=list)
-    checks: List[str] = Field(default_factory=list)
+@dataclass
+class AnalystFinding:
+    role: str
+    assessment: str
+    positives: List[str]
+    risks: List[str]
 
 
-class TraceStep(BaseModel):
-    step: int
-    name: str
-    summary: str
-    details: Dict[str, Any] = Field(default_factory=dict)
+@dataclass
+class TraceEvent:
+    step: str
+    input_summary: str
+    output_summary: str
+    status: str
+    timestamp: str
 
 
-class FinalReport(BaseModel):
-    company: str
-    ticker: str
-    executive_summary: str
-    score: ScoreSummary
+@dataclass
+class AgentReport:
+    prompt: str
+    company: CompanyCandidate
     plan: ResearchPlan
-    analyst_findings: List[AnalystFinding] = Field(default_factory=list)
-    sources: List[ResearchSource] = Field(default_factory=list)
-    verification: VerificationResult
-    memory_comparison: Dict[str, Any] = Field(default_factory=dict)
-    trace_id: Optional[str] = None
-    trace_steps: List[TraceStep] = Field(default_factory=list)
-    raw_data: Dict[str, Any] = Field(default_factory=dict)
+    executive_answer: str
+    investment_score: ScoreCard
+    risk_score: ScoreCard
+    analyst_findings: List[AnalystFinding]
+    sources: List[SourceItem]
+    data_snapshot: Dict[str, Any]
+    verifier_notes: List[str]
+    trace_events: List[TraceEvent] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
