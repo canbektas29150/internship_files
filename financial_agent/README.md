@@ -95,3 +95,44 @@ llm_client.py         # Opsiyonel Ollama writer
 ```
 
 Bu çıktı yatırım tavsiyesi değildir; araştırma ve due diligence desteği amaçlıdır.
+
+## V5 Trace / Explainability Layer
+
+Bu sürümde dashboard yapısı korunarak tracing tarafı güçlendirildi. Ana sekmeler aynı kaldı; geliştirmeler özellikle **Trace Timeline** sekmesinin altında toplandı.
+
+Trace sistemi artık her adım için şunları kaydeder:
+
+- step adı ve hedefi
+- kullanılan tool ve veri kaynağı
+- source URL
+- input / output özeti
+- latency
+- confidence
+- decision log
+- reasoning
+- validation sonucu
+- requested / returned / missing fields
+- evidence mapping
+- source quality
+- final answer claim validation
+
+Trace kayıtları yine lokal tutulur:
+
+```text
+logs/trace_events.jsonl
+```
+
+Dashboard içinde bakılacak yer:
+
+```text
+Trace Timeline
+├── ana timeline tablosu
+├── Decision Log
+├── Tool Calls / Field Coverage
+├── Evidence Mapping
+├── Source Quality
+├── Final Answer Validation
+└── Downloads
+```
+
+Bu yapı sayesinde sadece final cevaba değil, cevaba giderken agent'ın hangi veriyi nereden çektiğine, hangi field'ların eksik olduğuna ve final cevaptaki claim'lerin ne kadar desteklendiğine bakılabilir.

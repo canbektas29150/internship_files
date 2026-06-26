@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -45,6 +45,9 @@ class MetricScore:
     weight: float
     source: str
     explanation: str
+    evidence: List[Dict[str, Any]] = field(default_factory=list)
+    source_url: str = ""
+    validation: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -52,6 +55,8 @@ class ScoreCard:
     label: str
     total_score: float
     metrics: List[MetricScore]
+    evidence_map: Dict[str, Any] = field(default_factory=dict)
+    confidence: float = 0.0
 
 
 @dataclass
@@ -69,6 +74,24 @@ class TraceEvent:
     output_summary: str
     status: str
     timestamp: str
+    parent_step: str = ""
+    goal: str = ""
+    tool: str = ""
+    data_source: str = ""
+    source_url: str = ""
+    latency_ms: float = 0.0
+    confidence: float = 0.0
+    decision: Dict[str, Any] = field(default_factory=dict)
+    reasoning: List[str] = field(default_factory=list)
+    validation: Dict[str, Any] = field(default_factory=dict)
+    warnings: List[str] = field(default_factory=list)
+    requested_fields: List[str] = field(default_factory=list)
+    returned_fields: List[str] = field(default_factory=list)
+    missing_fields: List[str] = field(default_factory=list)
+    records_returned: int = 0
+    evidence: List[Dict[str, Any]] = field(default_factory=list)
+    source_quality: List[Dict[str, Any]] = field(default_factory=list)
+    claim_checks: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
